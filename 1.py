@@ -1,3 +1,4 @@
+.py
 # with open('in/1.test') as file:
 #   lines = file.read().split('\n\n')
 #   elves = [[int(num) for num  in line.split('\n')] for line in lines]
