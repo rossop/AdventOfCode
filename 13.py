@@ -6,144 +6,84 @@ def read_input(filename):
     data = f.read().strip().split('\n\n')
   return [list(map(eval, line.strip().split('\n'))) for line in data]
 
-
-def compare_lists(list_a, list_b):
+def compare(a,b):
   '''
-  Compare list_a to list_b. 
-  list_b must be larger according to a series of conditions.
-  RETURN 
-    - TRUE if in the right order
-    - FALSE if NOT in the right order
-    TODO
-      - diffrent types
-      - first list longer than second
-      - first list shorter than second
-      - 
+  Using 1,0,-1 allows to consider both True False and Carry-on conditions 
+  when are outside of a loop
   '''
-  for a, b in zip(list_a, list_b):
-    print(' ')
-    print('-----')
-    print(a)
-    print(b)
-    print(' ')
-    if isinstance(a, list) and isinstance(b, list):
-      if not compare_lists(a, b):
-        # print('isinstance(a and b, list)')
-        # print(a)
-        # print(b)
-        # print(' ')
-        return False
-      else:
-        if len(a) == len(b):
-          continue
-        elif len(list_a) > len(list_b):
-          return False
-        return True
+  if isinstance(a, int) and isinstance(b, int):
+    if a < b:
+      return -1
+    elif a == b:
+      0
+    elif a > b:
+      return 1
 
-    elif isinstance(a, int) and isinstance(b, int):
-      # print('HERE')
-      if a > b:
-        # print('here >')
-        return False
-        
-      elif a == b:
-        # print('here =')
-        continue
-        
-      elif a < b:
-        # print('here <')
-        return True
+  elif isinstance(a, list) and isinstance(b, list):
+    for ai, bi in zip(a,b):
+      c = compare(ai, bi)
+      if c == -1:
+        return -1
+      elif c == 1:
+        return 1
+    
+    if len(a) < len(b):
+      return -1
+    elif len(b) < len(a):
+      return 1
+    else:
+      return 0
+  elif isinstance(a, int) and isinstance(b, list):
+    return compare([a], b)
+  else:
+    return compare(a, [b])
 
-    elif isinstance(a, list):
-      # print('isinstance(a, list)')
-      if not compare_lists(a, [b]):
-        return False
-
-    elif isinstance(b, list):
-      # print('isinstance(b, list)')
-      if not compare_lists([a], b):
-        return False
-
-  if len(list_a) < len(list_b):
-    # print('len(list_a) < len(list_b)')
-    return True
-
-  elif len(list_a) > len(list_b):
-    # print('len(list_a) > len(list_b):')
-    return False
-  print(' ')
-  print('here we are at the end')
-  print(list_a)
-  print(list_b)
-  print(' ')
-  return True
+  
 
 
 def part_one(data):
   '''
   Part one code
   '''
-  print('##############')
+  packets = []
   result = 0
   for num, pair in enumerate(data, start=1):
-    print(f'This is problem number {num}')
-    if compare_lists(*pair):
+    if compare(*pair) == -1:
       result += num
-      print('pass')
+    packets.append(pair[0])
+    packets.append(pair[1])
 
-    else:
-      print('not pass')
+  return result, packets
 
-    print(' ')
-    print('##############')
-    print(' ')
-    print(' ')
-    print(' ')
-    print('##############')
-    print(' ')
-  return result
+def sort_packets(data):
+  pass
 
+def find_divider_packets(sorted_data, divider_packets):
+  pass
 
 def part_two(data):
   '''
   Part two code
   '''
-  result = 0
+  divider_packets = [[[2]],[[6]]]
+  data.appened(divider_packets[0])
+  data.appened(divider_packets[1])
+
+  sorted_data = sort_packets(data)
+  pos = find_divider_packets(sorted_data, divider_packets)
+  result = pos[0] * pos[1]
   return result
 
 
 def main():
   input_data = read_input("in/13.in")
 
-  result_one = part_one(input_data)
+  result_one, input_data_part2 = part_one(input_data)
   print(f"Part One: {result_one}")
 
-  result_two = part_two(input_data)
+  result_two = part_two(input_data_part2)
   print(f"Part Two: {result_two}")
 
 
 if __name__ == "__main__":
   main()
-
-'''
-[[[],2,8],[[9,[8,10,6,9,8],0,[10,7,9,5],[]],2,3,4,6]]
-[[[[4,0,3,3]]],[10],[6,5,[10,[0,0,10,7],[9],0],6]]
-
-
-##############
- 
-This is problem number 124
- 
------
-[[], 2, 8]
-[[[4, 0, 3, 3]]]
- 
- 
------
-[]
-[[4, 0, 3, 3]]
- 
-not pass
- 
-##############
-'''
