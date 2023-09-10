@@ -55,22 +55,35 @@ def part_one(data):
 
   return result, packets
 
-def sort_packets(data):
-  pass
+
+
+def sort_packets(arr):
+  n = len(arr)
+  for i in range(n):
+    for j in range(0, n-i-1):
+      if compare(arr[j], arr[j+1]) == 1:
+        arr[j], arr[j+1] = arr[j+1], arr[j]
+
+  return arr
 
 def find_divider_packets(sorted_data, divider_packets):
-  pass
+  pos = []
+  for index, l in enumerate(sorted_data,start = 1):
+    if l in divider_packets:
+      pos.append(index)
+  return pos
 
 def part_two(data):
   '''
   Part two code
   '''
   divider_packets = [[[2]],[[6]]]
-  data.appened(divider_packets[0])
-  data.appened(divider_packets[1])
+  data.append(divider_packets[0])
+  data.append(divider_packets[1])
 
   sorted_data = sort_packets(data)
   pos = find_divider_packets(sorted_data, divider_packets)
+  print(pos)
   result = pos[0] * pos[1]
   return result
 
