@@ -14,10 +14,12 @@ pp = pprint.PrettyPrinter(indent=4)
 Vertex = Tuple[int,int,str]
 Graph = Dict[Tuple[int, int, str], List[Tuple[int, int, str]]]
 
+
 def read_input(filename):
 	with open(filename, 'r') as f:
 		data = f.readlines()
 	return [[char for char in line.strip()]  for line in data]
+
 
 def find_pos(grid : List[List[str]], char:str)-> List[Vertex]:
 	R, C = len(grid), len(grid[0])
@@ -104,25 +106,36 @@ def bfs_test():
 
 def part_one(data):
 	# Your code for part one goes here
-	
 	graph = build_graph(data)
 	start  = find_pos(data,'S')
 	end  = find_pos(data,'E')
 
 	distance = bfs_shortest_distance(graph, start, end)
-	
 	return distance
 
 
 def part_two(data):
 	# Your code for part two goes here
-	result = 0
-	return result
+	graph = build_graph(data)
+	
+	start_S  = find_pos(data,'S')
+	start_a = find_pos(data,'a')
+	# Check if Start_S or start a is a list
+	start_vertices = [start_S] + start_a
+
+	end  = find_pos(data,'E')
+
+	distances = []
+	for start in start_vertices:
+		distance = bfs_shortest_distance(graph, start, end)
+		distances.append(distance)
+	
+	return min(filter(lambda x: x is not None, distances))
 
 
 def main():
 	input_data = read_input("in/12.in")
-	pp.pprint(input_data)
+
 	result_one = part_one(input_data)
 	print(f"Part One: {result_one}")
 	
@@ -132,5 +145,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
-
