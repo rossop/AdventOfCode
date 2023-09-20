@@ -45,7 +45,7 @@ def build_grid(data):
 	return wall
 
 
-# The sand is pouring into the cave from point 500,0.
+# The rock is pouring into the cave from point 500,0.
 
 
 def read_input(filename):
@@ -63,37 +63,36 @@ def read_input(filename):
 	return input_data
 
 
-def move_sand(wall):
-	ss = (500, 0)  # start sand
-	floor = max([y for x,y in wall])
-	hi_x = max([x for x,y in wall]) + 2
-	lo_x = min([x for x,y in wall]) - 2
+def move_rock(wall):
+	start_rock = (500, 0)  # start rock
+	floor = max([y for x,y in wall]) 
+	hi_x = max([x for x,y in wall])
+	lo_x = min([x for x,y in wall])
 
-	pp.pprint(f'The floor is {floor}, while the wall goes from {lo_x} to {hi_x}')
 	
 	saturation_step = 0
 	
 	for step in range(int(5e4)):
-		fs = deepcopy(ss)
+		rock = deepcopy(start_rock)
 		moves = True
-		if fs in wall:
+		if rock in wall:
 			break 
 			
 		while moves:
-			if (fs[0], fs[1] + 1) not in wall:
-				fs = (fs[0], fs[1] + 1)
-			elif (fs[0] - 1, fs[1] + 1) not in wall:
-				fs = (fs[0] - 1, fs[1] + 1)
-			elif (fs[0] + 1, fs[1] + 1) not in wall:
-				fs = (fs[0] + 1, fs[1] + 1)
+			if (rock[0], rock[1] + 1) not in wall:
+				rock = (rock[0], rock[1] + 1)
+			elif (rock[0] - 1, rock[1] + 1) not in wall:
+				rock = (rock[0] - 1, rock[1] + 1)
+			elif (rock[0] + 1, rock[1] + 1) not in wall:
+				rock = (rock[0] + 1, rock[1] + 1)
 			else:
-				wall.add(fs)
+				wall.add(rock)
 				saturation_step += 1
 				moves = False
-			if fs[1] > floor:
+			if rock[1] > floor:
 				moves = False
 
-			if fs[0] < lo_x or fs[0] > hi_x:
+			if rock[0] < lo_x or rock[0] > hi_x:
 				break
 				
 	return saturation_step
@@ -102,14 +101,21 @@ def move_sand(wall):
 def part_one(data):
 	# Your code for part one goes here
 	wall = build_grid(data)
-	result = move_sand(wall)
+	result = move_rock(wall)
 
 	return result
 
 
 def part_two(data):
 	# Your code for part two goes here
-	result = 0
+	wall = build_grid(data)
+	floor = max([y for x,y in wall]) 
+	hi_x = int(max([x for x,y in wall]) + 1e4)
+	lo_x = int(min([x for x,y in wall]) - 1e4)
+	bottom_wall = [(x,floor + 2)for x in range(hi_x - lo_x)]
+	wall |= set(bottom_wall)
+
+	result = move_rock(wall)
 	return result
 
 
