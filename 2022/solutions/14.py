@@ -120,7 +120,7 @@ def part_two(data):
 
 
 def main():
-	input_data = read_input("in/14.in")
+	input_data = read_input("../in/14.in")
 
 	result_one = part_one(input_data)
 	print(f"Part One: {result_one}")

@@ -69,9 +69,9 @@ def part_two(sizes):
 
 
 def main():
-	input_data = read_input("in/7.in")
+	input_data = read_input("../in/7.in")
 	sizes = calc_size(input_data)
-	
+
 	result_one = part_one(sizes)
 	print(f"Part One: {result_one}")
 

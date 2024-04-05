@@ -85,7 +85,7 @@ class Forest():
             if self.forest[r][cc] >= val:
               break
           scene[0] = counter
-          
+
           # go left
           counter = 0
           for rr in range(r - 1, -1, -1):
@@ -118,12 +118,12 @@ class Forest():
           if scenic_score > max_scenic_score:
             max_scenic_score = scenic_score
 
-    
+
     return max_scenic_score
 
 
 def main():
-  input_data = read_input("in/8.in")
+  input_data = read_input("../in/8.in")
 
   f = Forest(input_data)
   result_one = f.part_one()

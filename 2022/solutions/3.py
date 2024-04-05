@@ -27,7 +27,7 @@ def letter_to_number(letter: str) -> int:
     return ord(letter) - ord('a') + 1
 
 
-with open('in/3.input') as file:
+with open('../in/3.input') as file:
   lines = file.read().strip().split('\n')
 
 ### Part 1

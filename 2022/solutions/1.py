@@ -1,11 +1,10 @@
-.py
 # with open('in/1.test') as file:
 #   lines = file.read().split('\n\n')
 #   elves = [[int(num) for num  in line.split('\n')] for line in lines]
 
 # print([*map(sum(), elves)])
 
-with open('in/1.input') as file:
+with open('../in/1.input') as file:
   lines = file.read().strip().split('\n\n')
   elves = [[int(num) for num in line.split('\n')] for line in lines]
 

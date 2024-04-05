@@ -83,13 +83,12 @@ def part_two(data):
 
   sorted_data = sort_packets(data)
   pos = find_divider_packets(sorted_data, divider_packets)
-  print(pos)
   result = pos[0] * pos[1]
   return result
 
 
 def main():
-  input_data = read_input("in/13.in")
+  input_data = read_input("../in/13.in")
 
   result_one, input_data_part2 = part_one(input_data)
   print(f"Part One: {result_one}")

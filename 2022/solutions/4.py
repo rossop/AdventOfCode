@@ -1,4 +1,4 @@
-with open('in/4.input') as file:
+with open('../in/4.input') as file:
   lines = [line.split(',') for line in file.read().strip().split('\n')]
 
 ### Part 1
