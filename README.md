@@ -1,4 +1,6 @@
 # Advent of Code Solutions
+![2022](https://img.shields.io/badge/stars%20⭐-34-yellow)
+![2022](https://img.shields.io/badge/days%20completed-17-red)
 
 This repository contains my solutions for the Advent of Code (AoC) challenges, specifically for the year 2024. The structure is designed to organize inputs, solutions, and tests efficiently, facilitating quick access and understanding of each day's challenge.
 
