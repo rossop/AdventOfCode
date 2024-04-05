@@ -1,4 +1,4 @@
-with open('in/6.input') as file:
+with open('../in/6.input') as file:
   signals = file.read().strip().split('\n')
 
 

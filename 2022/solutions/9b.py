@@ -15,7 +15,7 @@ class Rope:
 
   def __init__(self):
     self.part = 1
-    self.instructions = read_instructions_from_file('in/9.input')
+    self.instructions = read_instructions_from_file('../in/9.input')
     self.head_pos = [0, 0]
     self.tail_pos = [0, 0]
     self.dir = {'R': (0, 1), 'L': (0, -1), 'U': (1, 0), 'D': (-1, 0)}
@@ -43,7 +43,7 @@ class Rope:
 
   def move_tail(self):
     '''
-    
+
     '''
     if self.dc == 0:  # move vertically
       self.tail_pos[0] += self.dr // abs(self.dr)
@@ -94,7 +94,7 @@ class LongRope(Rope):
 
   def move_tail(self):
     '''
-    
+
     '''
     for ii in range(len(self.knots_pos) - 1):
       self.update_tail_distance(ii)

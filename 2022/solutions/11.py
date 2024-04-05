@@ -32,7 +32,7 @@ def part_one(data):
 
   for index, monkey in enumerate(data):
     parsed_monkey = [*map(lambda x: x.split(': '), monkey)]
-    
+
     id = index
     starting_items = [*map(int,parsed_monkey[1][1].split(','))]
     operation = string_to_lambda(parsed_monkey[2][1])
@@ -40,7 +40,7 @@ def part_one(data):
     # test = lambda x: not (x % int(test_num))
     def test_function(x, tn=int(test_num)):
             return not (x % tn)
-    
+
     _, destination_if_true = parsed_monkey[4][1].split("throw to monkey ")
     _, destination_if_false = parsed_monkey[5][1].split("throw to monkey ")
 
@@ -52,7 +52,7 @@ def part_one(data):
     TRUE.append(int(destination_if_true))
     FALSE.append(int(destination_if_false))
     COUNTERS.append(0)
-  
+
   lcm = 1
   for div in DIV:
     lcm *= div
@@ -67,7 +67,7 @@ def part_one(data):
         destination_monkey = TRUE[monkey] if monkey_test(worry_level) else FALSE[monkey]
         ITEMS[destination_monkey].append(worry_level)
         COUNTERS[monkey] += 1
-  
+
   counters = []
   sorted_counters = sorted(COUNTERS, reverse=True)
   result = sorted_counters[0] * sorted_counters[1]
@@ -88,7 +88,7 @@ def part_one_dict(data):
   monkeys = []
   for index, monkey in enumerate(data):
     parsed_monkey = [*map(lambda x: x.split(': '), monkey)]
-    
+
     id = index
     starting_items = [*map(int,parsed_monkey[1][1].split(','))]
     operation = string_to_lambda(parsed_monkey[2][1])
@@ -96,7 +96,7 @@ def part_one_dict(data):
     # test = lambda x: not (x % int(test_num))
     def test_function(x, tn=int(test_num)):
             return not (x % tn)
-    
+
     _, destination_if_true = parsed_monkey[4][1].split("throw to monkey ")
     _, destination_if_false = parsed_monkey[5][1].split("throw to monkey ")
 
@@ -107,7 +107,7 @@ def part_one_dict(data):
     monkey['Test'] = test_function
     monkey[True] = int(destination_if_true)
     monkey[False] = int(destination_if_false)
-  
+
     monkeys.append(monkey)
 
   for _ in range(20):
@@ -134,7 +134,7 @@ def part_two(data):
 
 
 def main():
-  input_data = read_input("in/11.in")
+  input_data = read_input("../in/11.in")
 
   result_one = part_one(input_data)
   print(f"Part One: {result_one}")

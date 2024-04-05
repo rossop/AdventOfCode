@@ -73,7 +73,7 @@ def part_two(sensor_data, beacon_data):
 
 
 def main():
-	sensor_data, beacon_data = read_input("in/15.test")
+	sensor_data, beacon_data = read_input("../in/15.test")
 
 	result_one = part_one(sensor_data, beacon_data)
 	print(f"Part One: {result_one}")

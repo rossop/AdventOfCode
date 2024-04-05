@@ -1,11 +1,11 @@
-''' 
+'''
 Planning
 I need to decide
   - How to represent the position of head and tail
   - how large is the space I want to use to map HT
   - How i am going to move head and tail
-  
-Procedure should be something along the line of 
+
+Procedure should be something along the line of
   - apply movement for H
   - check relative position for T
   - apply movement for T
@@ -13,7 +13,7 @@ Procedure should be something along the line of
 
 Final notes
 I didn't need a board, I just need two list with position and a third list with the visited positions
-  
+
 '''
 
 import numpy as np
@@ -26,7 +26,7 @@ class Rope:
   '''
 
   def __init__(self):
-    with open('in/9.test') as file:
+    with open('../in/9.test') as file:
       lines = [(line.split(' ')[0], int(line.split(' ')[1]))
                for line in file.read().strip().split('\n')]
 
@@ -63,7 +63,7 @@ class Rope:
       for jj in range(-1,2):
         if H_pos = (T_pos[0] + ii, T_pos[1] + jj):
           return True
-    
+
     return False
 
   def move_tail(self):
@@ -74,15 +74,15 @@ class Rope:
 
     for x, y in zip(*T_pos):
       self.tail_positions[x, y] = self.tail_positions[x, y].lower()
-      
-    if diff[0] == 0: 
+
+    if diff[0] == 0:
       self.tail_positions[x, y - diff[1]] = 'T'
-      
+
     elif diff[1] == 0:
       self.tail_positions[x - diff[0], y] = 'T'
-      
+
     else:
-      
+
 
   def move_head(self, move):
     '''
@@ -103,12 +103,12 @@ class Rope:
         # pos = list(zip(pos[0], pos[1]))table
         for x, y in zip(*pos):
           self.head_positions[x, y] = self.head_positions[x, y].lower()
-          
+
         self.head_positions[x + t[0], y + t[1]] = 'H'
 
         while not self.is_tail_adjacent():
           self.move_tail()
 
-      
+
 R = Rope()
 print(R)

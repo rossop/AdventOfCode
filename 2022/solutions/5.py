@@ -62,27 +62,25 @@ def part_one(stack,moves):
 def part_two(stack,moves):
  # CrateMover 9001
   for move in moves:
-    print(' ')
-    print(stack)
     num_blocks_to_move = move['move']
-    
+
     # Remove the blocks from the source stack
     blocks_to_move = stack[move['from']][-num_blocks_to_move:]
     del stack[move['from']][-num_blocks_to_move:]
-    
+
     # Add the blocks to the destination stack
     stack[move['to']].extend(blocks_to_move)
-  
+
   return output_result(stack)
 
 
 def main():
-  input_stack, moves = read_input("in/5.in")
+  input_stack, moves = read_input("../in/5.in")
   stack_part_one = deepcopy(input_stack)
   stack_part_two = deepcopy(input_stack)
   # Deepcopy was used because changed to input stack in part one persist even
   # if inputstack isn't returned or global.
-  
+
   result_one = part_one(stack_part_one, moves)
   print(f"Part One: {result_one}")
 

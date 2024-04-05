@@ -3,7 +3,7 @@
 A problem with breadth-first-search
 '''
 from copy import deepcopy
-from collections import deque 
+from collections import deque
 
 from typing import List, Dict, Set, Tuple, Optional
 
@@ -50,7 +50,7 @@ def build_graph(grid: List[List[str]]) -> Graph:
 				if 0 <= rr < R and 0 <= cc < C:  # check if within boundaries
 					current_height = ord(grid[r][c])
 					neighbour_height = ord(grid[rr][cc])
-					
+
 					if grid[rr][cc] == 'S':
 						neighbour_height = ord('a')
 					elif grid[rr][cc] == 'E':
@@ -70,13 +70,13 @@ def build_graph(grid: List[List[str]]) -> Graph:
 def bfs_shortest_distance(graph: Graph,
 						  start: Vertex,
 						  target: Vertex) -> Optional[int]:
-	
+
 	visited: Set[Vertex] = set()
 	queue = deque([(start, 0)])  # Item in queue is a tuple (node, distance from start)
 
 	while queue:
 		vertex, distance = queue.popleft()  # Dequeue front node and distance from start
-		
+
 		if vertex == target:
 			return distance  # Found target, return distance
 
@@ -85,7 +85,7 @@ def bfs_shortest_distance(graph: Graph,
 			for neighbor in graph[vertex]:
 				if neighbor not in visited:
 					queue.append((neighbor, distance + 1))
-	
+
 	return None  # No distance == the target vertex is not reachable from start
 
 
@@ -117,7 +117,7 @@ def part_one(data):
 def part_two(data):
 	# Your code for part two goes here
 	graph = build_graph(data)
-	
+
 	start_S  = find_pos(data,'S')
 	start_a = find_pos(data,'a')
 	# Check if Start_S or start a is a list
@@ -129,18 +129,18 @@ def part_two(data):
 	for start in start_vertices:
 		distance = bfs_shortest_distance(graph, start, end)
 		distances.append(distance)
-	
+
 	return min(filter(lambda x: x is not None, distances))
 
 
 def main():
-	input_data = read_input("in/12.in")
+    input_data = read_input("../in/12.in")
 
-	result_one = part_one(input_data)
-	print(f"Part One: {result_one}")
-	
-	result_two = part_two(input_data)
-	print(f"Part Two: {result_two}")
+    result_one = part_one(input_data)
+    print(f"Part One: {result_one}")
+    
+    result_two = part_two(input_data)
+    print(f"Part Two: {result_two}")
 
 
 if __name__ == "__main__":

@@ -25,12 +25,12 @@ class Register:
     return "Part 1: " + str(sum(self.signal_strength_archive))
 
   def _import_data_(self):
-    with open('in/10.input') as file:
-      lines = file.read().strip().split('\n')
-      parsed_lines = [(line.split()[0],
+      with open('../in/10.in') as file:
+        lines = file.read().strip().split('\n')
+        parsed_lines = [(line.split()[0],
                        int(line.split()[1]) if len(line.split()) > 1 else None)
                       for line in lines]
-      self.programme = parsed_lines
+        self.programme = parsed_lines
 
   def _cycle_up_(self):
     self.values_archive.append(self.value)
