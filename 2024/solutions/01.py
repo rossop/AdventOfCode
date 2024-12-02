@@ -20,7 +20,7 @@ def read_input(file_name: str) -> Any:
         Any: Processed data.
     """
     file_path = os.path.join('2024/in', file_name)
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         data: List[str] = file.read().strip().splitlines()
         split_data: List[List[int]] = [
             list(map(int, line.split())) for line in data]
@@ -57,7 +57,6 @@ def solve_part_two(data: List[str]) -> Any:
     Returns:
         Any: The result of the solution for part two.
     """
-    # TODO: Implement the solution for part two
     column_a, column_b = data
 
     freq_b: Dict[int, int] = Counter(column_b)
