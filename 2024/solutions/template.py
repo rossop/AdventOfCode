@@ -2,56 +2,79 @@
 Template for Advent of Code solutions.
 
 This module provides a structure for solving Advent of Code challenges.
-Input can be read from local files (##.in or ##.test) or fetched via AOCD.
-When fetching from AOCD, data is automatically saved to local files.
+The input files are expected to be located in the '2024/in' directory.
 """
 
 import os
-from typing import List, Any
-from aocd import get_data
+from typing import List, Any, Dict
+from collections import Counter
+
+import sys
+from collections import defaultdict, Counter
+
+input_directory: str = os.path.join(
+    os.path.dirname(
+        os.path.abspath(
+            os.path.dirname(__file__)
+        )
+    ), 'in'
+)
 
 
-def get_input(day: int, year: int, test: bool = False) -> List[str]:
-    """Reads the input from either a local file or fetches it via AOCD.
-
-    When fetching from AOCD, automatically saves the data to a local file.
+def read_input(file_name: str) -> Dict[str, Any]:
+    """Reads input from a specified file and separates metadata for test files.
 
     Args:
-        day (int): The day of the challenge.
-        year (int): The year of the challenge.
-        test (bool, optional): Whether to use test input file. Defaults to
-            False.
+        file_name (str): Name of the input file (.in or .test)
 
     Returns:
-        List[str]: A list of strings representing the input data.
-
-    Raises:
-        FileNotFoundError: If test file is requested but doesn't exist.
+        Dict[str, Any]: Dictionary containing:
+            - 'data': Raw string of input data
+            - 'answer_a': Expected answer for part 1 (None for .in files)
+            - 'answer_b': Expected answer for part 2 (None for .in files)
     """
-    day_str: str = f"{day:02d}"
+    file_path: str = os.path.join(input_directory, file_name)
+    result: Dict[str, Any] = {
+        'data': None,
+        'answer_a': None,
+        'answer_b': None
+    }
 
-    if test:
-        file_path = f"{day_str}.test"
-        try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                return file.read().strip().splitlines()
-        except FileNotFoundError as e:
-            raise FileNotFoundError(
-                f"Test file {file_path} not found"
-            ) from e
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content: str = file.read()
 
-    # Try local file first
-    file_path = f"{day_str}.in"
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return file.read().strip().splitlines()
-    except FileNotFoundError:
-        # Fetch from AOCD and save locally
-        data: str = get_data(day=day, year=year)
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(data)
-        return data.splitlines()
+        # Handle .test files with metadata
+        if file_name.endswith('.test'):
+            # Find the data section between Example data marker and answer section
+            data_start: int = content.find('Example data')
+            if data_start != -1:
+                data_start = content.find('\n', data_start) + 1
+                data_end: int = content.find('\n-----------------', data_start)
+                if data_end != -1:
+                    result['data'] = content[data_start:data_end].strip()
+
+            # Extract answers if present
+            answer_section: str = content[data_end:] if data_end != -1 else ''
+            for line in answer_section.splitlines():
+                if line.startswith('answer_a:'):
+                    ans: str = line.split(':')[1].strip()
+                    result['answer_a'] = int(ans) if ans != '-' else None
+                elif line.startswith('answer_b:'):
+                    ans: str = line.split(':')[1].strip()
+                    result['answer_b'] = int(ans) if ans != '-' else None
+
+        # Handle regular .in files
+        else:
+            result['data'] = content.strip()
+
+    return result
+
+
+def process(raw_data: str) -> Any:
+    """Processes the input data.
+    """
+    # TODO: Implement the processing for the input data
+    return None
 
 
 def solve_part_one(data: List[str]) -> Any:
@@ -81,12 +104,11 @@ def solve_part_two(data: List[str]) -> Any:
 
 
 if __name__ == "__main__":
-    # Configure these values for each challenge
-    DAY: int = 1
-    YEAR: int = 2024
-    USE_LOCAL: bool = False
+    day: str = __file__.rsplit('/', maxsplit=1)[-1].replace('.py', '')
+    infile = sys.argv[1] if len(sys.argv) >= 2 else f'{day}.in'
 
-    input_data = get_input(DAY, YEAR, USE_LOCAL)
+    raw_data = read_input(infile)
+    input_data = process(raw_data['data'])
 
     result_part_one = solve_part_one(input_data)
     if result_part_one is not None:
