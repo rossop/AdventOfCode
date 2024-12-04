@@ -6,11 +6,10 @@ The input files are expected to be located in the '2024/in' directory.
 """
 
 import os
-from typing import List, Any, Dict
-from collections import Counter
-
 import sys
-from collections import defaultdict, Counter
+from typing import List, Any, Dict
+from collections import Counter, defaultdict
+
 
 input_directory: str = os.path.join(
     os.path.dirname(
@@ -58,10 +57,10 @@ def read_input(file_name: str) -> Dict[str, Any]:
             for line in answer_section.splitlines():
                 if line.startswith('answer_a:'):
                     ans: str = line.split(':')[1].strip()
-                    result['answer_a'] = int(ans) if ans != '-' else None
+                    result['answer_a'] = ans if ans != '-' else None
                 elif line.startswith('answer_b:'):
                     ans: str = line.split(':')[1].strip()
-                    result['answer_b'] = int(ans) if ans != '-' else None
+                    result['answer_b'] = ans if ans != '-' else None
 
         # Handle regular .in files
         else:
