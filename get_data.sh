@@ -1,7 +1,8 @@
 #!/bin/bash
 
-YEAR=2024
-DAY=2
+# Get the current day and year if not supplied as arguments
+DAY=${1:-$(date +%d)}
+YEAR=${2:-$(date +%Y)}
 
 # Create directory if it doesn't exist
 mkdir -p "$YEAR/in"
