@@ -7,7 +7,7 @@ The input files are expected to be located in the '2024/in' directory.
 
 import os
 import sys
-from typing import List, Any, Dict
+from typing import Any, Dict
 
 
 input_directory: str = os.path.join(
@@ -106,8 +106,8 @@ if __name__ == "__main__":
     day: str = __file__.rsplit('/', maxsplit=1)[-1].replace('.py', '')
     infile = sys.argv[1] if len(sys.argv) >= 2 else f'{day}.in'
 
-    raw_data = read_input(infile)
-    input_data = process(raw_data['data'])
+    unprocessed_data = read_input(infile)
+    input_data = process(unprocessed_data['data'])
 
     result_part_one = solve_part_one(input_data)
     if result_part_one is not None:
