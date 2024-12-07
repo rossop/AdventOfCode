@@ -8,7 +8,6 @@ The input files are expected to be located in the '2024/in' directory.
 import os
 import sys
 from typing import List, Any, Dict
-from collections import Counter, defaultdict
 
 
 input_directory: str = os.path.join(
@@ -44,7 +43,8 @@ def read_input(file_name: str) -> Dict[str, Any]:
 
         # Handle .test files with metadata
         if file_name.endswith('.test'):
-            # Find the data section between Example data marker and answer section
+            # Find the data section between Example data marker and answer
+            # section
             data_start: int = content.find('Example data')
             if data_start != -1:
                 data_start = content.find('\n', data_start) + 1
@@ -76,11 +76,11 @@ def process(raw_data: str) -> Any:
     return None
 
 
-def solve_part_one(data: List[str]) -> Any:
+def solve_part_one(data: Any) -> Any:
     """Solves part one of the challenge.
 
     Args:
-        data (List[str]): The input data for the challenge.
+        data (Any): The input data for the challenge.
 
     Returns:
         Any: The result of the solution for part one.
@@ -89,7 +89,7 @@ def solve_part_one(data: List[str]) -> Any:
     return None
 
 
-def solve_part_two(data: List[str]) -> Any:
+def solve_part_two(data: Any) -> Any:
     """Solves part two of the challenge.
 
     Args:
