@@ -119,3 +119,9 @@ data/temp/
 # Commit notes
 commit.txt
 2024/out/day15/day15_board_animation.mp4
+
+
+# Ignore files to respect Fair Use Policy
+*.in
+*.test
+in/*
