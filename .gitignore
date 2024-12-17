@@ -124,4 +124,6 @@ commit.txt
 # Ignore files to respect Fair Use Policy
 *.in
 *.test
+*input.txt
+*.input
 in/*
