@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.DS_Store
 
 # C extensions
 *.so
@@ -117,3 +118,12 @@ data/temp/
 
 # Commit notes
 commit.txt
+2024/out/day15/day15_board_animation.mp4
+
+
+# Ignore files to respect Fair Use Policy
+*.in
+*.test
+*input.txt
+*.input
+in/*
