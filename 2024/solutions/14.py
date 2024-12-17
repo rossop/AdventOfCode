@@ -11,6 +11,7 @@ import sys
 from typing import Any, Dict, Tuple, List, Optional
 from dataclasses import dataclass
 import argparse
+import copy
 
 import numpy as np
 from scipy.fft import fft2, fftshift
@@ -166,7 +167,7 @@ def solve_part_one(data: Any) -> Any:
     Returns:
         Any: The result of the solution for part one.
     """
-    list_of_robots: List[Robot] = data["list_of_robots"]
+    list_of_robots: List[Robot] = copy.deepcopy(data["list_of_robots"])
     rows: int = data["rows"]
     cols: int = data["cols"]
     steps: int = 100
@@ -219,7 +220,7 @@ def visualize_fft(
         rows (int): Number of rows in the grid
         cols (int): Number of columns in the grid
         iteration (int): Current iteration number
-        save_images (bool, optional): Whether to save FFT visualizations. 
+        save_images (bool, optional): Whether to save FFT visualizations.
             Defaults to False.
     """
     if not save_images:
@@ -332,15 +333,15 @@ def solve_part_two(data: Any, save_images: bool = False) -> Any:
     Returns:
         Any: The result of the solution for part two.
     """
-    list_of_robots: List[Robot] = data["list_of_robots"]
+    list_of_robots: List[Robot] = copy.deepcopy(data["list_of_robots"])
     rows: int = data["rows"]
     cols: int = data["cols"]
     i: int = 0
     easter_egg_iter_num: Optional[int] = None
     # First horizontal pattern by visual inspection
-    first_horizontal_pattern: Optional[int] = 19
+    first_horizontal_pattern: Optional[int] = 16
     # First vertical pattern by visual inspection
-    first_vertical_pattern: Optional[int] = 72
+    first_vertical_pattern: Optional[int] = 71
 
     # Track complexity over time
     complexities: List[int] = []
@@ -368,7 +369,10 @@ def solve_part_two(data: Any, save_images: bool = False) -> Any:
         complexities.append(complexity)
         iterations.append(i)
 
-        if (i - first_horizontal_pattern) % rows == 0 or (i - first_vertical_pattern) % cols == 0:
+        if (
+            (i - first_horizontal_pattern) % rows == 0 or
+            (i - first_vertical_pattern) % cols == 0
+        ):
             visualize_fft(new_pic, rows, cols, i, save_images)
 
         # Check for pattern changes less frequently
