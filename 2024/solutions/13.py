@@ -201,8 +201,13 @@ def solve_part_one(data: Any) -> Any:
     return total_cost
 
 
-def solve_large_diophantine(A: int, B: int, Target: int) -> Optional[List[Tuple[int, int]]]:
-    """Finds integer solutions for A * x + B * y = Target efficiently for large numbers.
+def solve_large_diophantine(
+    A: int,
+    B: int,
+    Target: int
+) -> Optional[List[Tuple[int, int]]]:
+    """Finds integer solutions for A * x + B * y = Target efficiently for
+    large numbers.
 
     Args:
         A (int): Coefficient of x
