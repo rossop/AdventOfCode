@@ -78,7 +78,7 @@ def process(raw_data: str) -> Any:
     ]
 
 
-def solve_part_one(data: Any) -> Any:
+def solve(data: Any) -> Any:
     """Solves part one of the challenge.
 
     Args:
@@ -95,6 +95,90 @@ def solve_part_one(data: Any) -> Any:
     regions: Dict = {}
     visited: Set = set()
     grid: List[List[str]] = copy.deepcopy(data)
+
+    def get_edges(plants: List[Tuple[int, int]],
+                  perimeter_points: List[Tuple[int, int]]) -> int:
+        """
+        Counts number of distinct edges in a region by finding connected
+        components.
+        """
+        plant_set: List[Tuple[int, int]] = set(plants)
+        perimeter_set: Set[Tuple[int, int]] = set(perimeter_points)
+        visited: Set[Tuple[int, int]] = set()
+        components: int = 0
+
+        # Find bounds for visualization
+        min_x: int = min(min(x for x, _ in plants),
+                         min(x for x, _ in perimeter_points))
+        max_x: int = max(max(x for x, _ in plants),
+                         max(x for x, _ in perimeter_points))
+        min_y: int = min(min(y for _, y in plants),
+                         min(y for _, y in perimeter_points))
+        max_y: int = max(max(y for _, y in plants),
+                         max(y for _, y in perimeter_points))
+
+        def get_adjacent_positions(x: int, y: int) -> List[Tuple[int, int]]:
+            """Get all valid adjacent positions."""
+            return [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
+
+        def dfs_component(point: Tuple[int, int],
+                          current_component: Set[Tuple[int, int]]) -> None:
+            """DFS to find connected perimeter points."""
+            visited.add(point)
+            current_component.add(point)
+
+            x, y = point
+            for next_point in get_adjacent_positions(x, y):
+                if (
+                    next_point in perimeter_set and
+                    next_point not in visited
+                ):
+                    # Check if there's a plant between these perimeter points
+                    shared_plant: bool = False
+                    for plant in plants:
+                        if (
+                            is_adjacent(next_point, plant) and
+                            is_adjacent(point, plant)
+                        ):
+                            shared_plant = True
+                            break
+                    if not shared_plant:
+                        dfs_component(next_point, current_component)
+
+        def visualize_component(component_points: Set[Tuple[int, int]],
+                                component_num: int) -> None:
+            """Visualize a single component with ASCII art."""
+            print(f"\nComponent {component_num}:")
+            for x in range(min_x - 1, max_x + 2):
+                row: str = ""
+                for y in range(min_y - 1, max_y + 2):
+                    if (x, y) in component_points:
+                        row += str(component_num)
+                    elif (x, y) in plant_set:
+                        row += "P"
+                    elif (x, y) in perimeter_set:
+                        row += "."
+                    else:
+                        row += " "
+                print(row)
+
+        def is_adjacent(p1: Tuple[int, int], p2: Tuple[int, int]) -> bool:
+            """Check if two points are adjacent."""
+            x1, y1 = p1
+            x2, y2 = p2
+            return abs(x1 - x2) + abs(y1 - y2) == 1
+
+        # Find and visualize connected components
+        print(f"\nAnalyzing region with {len(plants)} plants...")
+        for point in perimeter_points:
+            if point not in visited:
+                components += 1
+                current_component: Set[Tuple[int, int]] = set()
+                dfs_component(point, current_component)
+                visualize_component(current_component, components)
+
+        print(f"Total components found: {components}\n")
+        return components
 
     def dfs(i, j, region):
         if (
@@ -131,6 +215,7 @@ def solve_part_one(data: Any) -> Any:
             if (r, c) not in visited:
                 label: str = grid[r][c]
                 region: Tuple[str, int, int] = (label, r, c)
+
                 regions[region] = {
                     "plants": [],
                     "perimeter": 0,
@@ -142,26 +227,34 @@ def solve_part_one(data: Any) -> Any:
 
     # calc values
     ans: int = 0
-    for identification, info in regions.items():
+    ans2: int = 0
+    # Create a grid that is 1 larger than the original grid
+
+    # Fill the visual grid with plants and perimeter markers
+    for (label, r, c), info in regions.items():
+        visual_grid: List[List[str]] = [
+            [' ' for _ in range(cols + 2)] for _ in range(rows + 2)
+        ]
+        for (plant_r, plant_c) in info["plants"]:
+            # Offset by 1 for the border
+            visual_grid[plant_r + 1][plant_c + 1] = label
+        for (perimeter_r, perimeter_c) in info["PerimeterPlants"]:
+            # Offset by 1 for the border
+            visual_grid[perimeter_r + 1][perimeter_c + 1] = '#'
+
+        # Print the visual grid
+        for row in visual_grid:
+            print(''.join(row))
+
+    for _, info in regions.items():
         perimeter: int = info["perimeter"]
         area: int = info["area"]
-        # sides = count_sides(info["plants"], info["PerimeterPlants"])
+        sides: int = get_edges(info["plants"], info["PerimeterPlants"])
         ans += area * perimeter
-
+        ans2 += area * sides
+        print(info)
+    print(ans, ans2)
     return ans
-
-
-def solve_part_two(data: Any) -> Any:
-    """Solves part two of the challenge.
-
-    Args:
-        data (List[str]): The input data for the challenge.
-
-    Returns:
-        Any: The result of the solution for part two.
-    """
-    # TODO: Implement the solution for part two
-    return None
 
 
 if __name__ == "__main__":
@@ -170,9 +263,9 @@ if __name__ == "__main__":
 
     unprocessed_data = read_input(infile)
     input_data = process(unprocessed_data['data'])
-    result_part_one = solve_part_one(input_data)
+    result_part_one = solve(input_data)
     if result_part_one is not None:
         print(f"Part One: {result_part_one}")
-    result_part_two = solve_part_two(input_data)
+    result_part_two = None
     if result_part_two is not None:
         print(f"Part Two: {result_part_two}")
