@@ -10,6 +10,7 @@ import sys
 import re
 from typing import Any, Dict, List, Tuple, NewType, Optional, Set
 import copy
+import z3  # Add this import at the top
 
 Claw = NewType('Claw', Dict[str, Tuple[int, int]])
 
@@ -244,68 +245,65 @@ def solve_large_diophantine(A: int, B: int, Target: int) -> Optional[List[Tuple[
     return None
 
 
-def solve_part_two(data: Any) -> Any:
-    """Solves part two of the challenge.
-®
+def solve_with_z3(
+    ax: int,
+    ay: int,
+    bx: int,
+    by: int,
+    px: int,
+    py: int,
+    is_part2: bool = False
+) -> int:
+    """Solves the diophantine equations using Z3 solver.
+
     Args:
-        data (List[str]): The input data for the challenge.
+        ax, ay: Coefficients for button A
+        bx, by: Coefficients for button B
+        px, py: Target coordinates
+        is_part2: Whether to apply part 2 modifier
+
+    Returns:
+        int: Minimum cost solution or 0 if no solution exists
+    """
+    modifier: int = 10000000000000 if is_part2 else 0
+    px += modifier
+    py += modifier
+
+    # Create Z3 solver and variables
+    solver = z3.Solver()
+    t1 = z3.Int('t1')
+    t2 = z3.Int('t2')
+
+    # Add constraints
+    solver.add(t1 > 0)
+    solver.add(t2 > 0)
+    solver.add(t1 * ax + t2 * bx == px)
+    solver.add(t1 * ay + t2 * by == py)
+
+    if solver.check() == z3.sat:
+        model = solver.model()
+        return model.eval(3 * t1 + t2).as_long()
+    return 0
+
+
+def solve_part_two(data: Any) -> Any:
+    """Solves part two of the challenge using Z3 solver.
+
+    Args:
+        data (Any): The input data for the challenge.
 
     Returns:
         int: Total minimum cost for all solvable machines.
     """
-    cost: Dict[str, int] = {"A": 3, "B": 1}
     total_cost: int = 0
-    modifier: int = 10000000000000
 
-    # Update data for part two
-    machines_pt2: List[Claw] = []
     for machine in data:
-        new_machine = copy.deepcopy(machine)
-        new_target_x = machine['Target'][0] + modifier
-        new_target_y = machine['Target'][1] + modifier
-        new_machine['Target'] = (new_target_x, new_target_y)
-        machines_pt2.append(new_machine)
+        xa, ya = machine['A']
+        xb, yb = machine['B']
+        px, py = machine['Target']
 
-    for idx, machine in enumerate(machines_pt2, 1):
-        XA, YA = machine['A']
-        XB, YB = machine['B']
-        PX, PY = machine['Target']
-
-        print(f"\nAnalyzing machine {idx}:")
-        print(f"Button A: X+{XA}, Y+{YA}")
-        print(f"Button B: X+{XB}, Y+{YB}")
-        print(f"Target: X={PX}, Y={PY}")
-
-        try:
-            # Solve for X and Y
-            x_solutions = solve_large_diophantine(XA, XB, PX)
-            if x_solutions is None:
-                print(f"No X solution for machine {idx}")
-                continue
-
-            y_solutions = solve_large_diophantine(YA, YB, PY)
-            if y_solutions is None:
-                print(f"No Y solution for machine {idx}")
-                continue
-
-            # Find common solutions
-            common_solutions = set(x_solutions) & set(y_solutions)
-            if not common_solutions:
-                print(f"No common solution for machine {idx}")
-                continue
-
-            # Calculate cost for this machine
-            best_solution = minimize_cost(
-                common_solutions, cost["A"], cost["B"])
-            machine_cost = best_solution[0] * \
-                cost["A"] + best_solution[1] * cost["B"]
-            print(
-                f"Machine {idx} solvable with {best_solution} costing {machine_cost}")
-            total_cost += machine_cost
-
-        except Exception as e:
-            print(f"Error processing machine {idx}: {str(e)}")
-            continue
+        cost = solve_with_z3(xa, ya, xb, yb, px, py, True)
+        total_cost += cost
 
     return total_cost
 
