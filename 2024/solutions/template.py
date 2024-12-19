@@ -7,7 +7,7 @@ The input files are expected to be located in the '2024/in' directory.
 
 import os
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, List, Set
 
 
 input_directory: str = os.path.join(
@@ -72,31 +72,22 @@ def read_input(file_name: str) -> Dict[str, Any]:
 def process(raw_data: str) -> Any:
     """Processes the input data.
     """
+    print(raw_data)
     # TODO: Implement the processing for the input data
     return None
 
 
 def solve_part_one(data: Any) -> Any:
     """Solves part one of the challenge.
-
-    Args:
-        data (Any): The input data for the challenge.
-
-    Returns:
-        Any: The result of the solution for part one.
     """
+    if data is not None:
+        print(data)
     # TODO: Implement the solution for part one
     return None
 
 
 def solve_part_two(data: Any) -> Any:
     """Solves part two of the challenge.
-
-    Args:
-        data (List[str]): The input data for the challenge.
-
-    Returns:
-        Any: The result of the solution for part two.
     """
     # TODO: Implement the solution for part two
     return None
