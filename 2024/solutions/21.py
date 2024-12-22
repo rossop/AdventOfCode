@@ -9,8 +9,6 @@ import os
 import sys
 from typing import Any, Deque, Dict, List, Optional, Tuple
 
-import heapq
-
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
@@ -210,7 +208,13 @@ def find_shortest_paths(
 
 
 def solve_part_one(data: Any) -> Any:
-    """Solves part one of the challenge."""
+    """Solves part one of the challenge.
+
+    For each code, we need to:
+    1. Find path for first robot on number pad
+    2. Find path for second robot on arrow pad to input first robot's commands
+    3. Find path for human on arrow pad to input second robot's commands
+    """
     number_pad: List[List[str]] = [
         ['7', '8', '9'],
         ['4', '5', '6'],
@@ -223,100 +227,62 @@ def solve_part_one(data: Any) -> Any:
         ['<', 'v', '>'],
     ]
 
-    def get_pad_value(pad: List[List[str]], pos: Tuple[int, int]) -> Optional[str]:
-        """Get value at position if valid, None otherwise."""
-        r, c = pos
-        if 0 <= r < len(pad) and 0 <= c < len(pad[r]):
-            return pad[r][c] if pad[r][c] != ' ' else None
-        return None
-
-    def apply_move(pos: Tuple[int, int], move: str) -> Tuple[int, int]:
-        """Apply move to position."""
-        r, c = pos
-        if move == 'A':
-            return (r, c)
-        elif move == '<':
-            return (r, c-1)
-        elif move == '^':
-            return (r-1, c)
-        elif move == '>':
-            return (r, c+1)
-        elif move == 'v':
-            return (r+1, c)
-        return pos
-
-    def get_arrow_moves(from_pos: Tuple[int, int], to_move: str) -> int:
-        """Calculate number of moves needed on arrow pad to input a move."""
-        if to_move == 'A':
-            return 1  # Just need to press A
-
-        # Find position of target move on arrow pad
-        target_pos = None
-        for r in range(len(arrow_pad)):
-            for c in range(len(arrow_pad[r])):
-                if arrow_pad[r][c] == to_move:
-                    target_pos = (r, c)
-                    break
-            if target_pos:
-                break
-
-        # Calculate Manhattan distance plus 1 for the final 'A' press
-        if target_pos:
-            return (abs(from_pos[0] - target_pos[0]) +
-                    abs(from_pos[1] - target_pos[1]) + 1)
-        return float('inf')
+    # Get all possible transitions on arrow pad
+    arrow_transitions = find_shortest_paths(arrow_pad)
 
     total_complexity: int = 0
-    for code_list in data:
-        code = ''.join(code_list)  # Convert list to string
-        # Start with robot at 'A' position (3,2) on number pad
-        # and at (0,2) on arrow pad (where 'A' is)
-        start = (0, (3, 2), (0, 2), '')  # (cost, num_pos, arrow_pos, output)
-        queue = [(0, start)]
-        seen = set()
-
-        while queue:
-            cost, (_, num_pos, arrow_pos, output) = heapq.heappop(queue)
-
-            if output == code:
-                numeric_part = int(''.join(filter(str.isdigit, code)))
-                total_complexity += cost * numeric_part
-                break
-
-            if not code.startswith(output):
+    for code in data:
+        print('code', code)
+        # First robot path (on number pad)
+        current_pos: str = 'A'
+        first_robot_path: str = ""
+        for target in code:
+            paths = bfs(number_pad, current_pos, target)
+            if not paths:
                 continue
+            first_robot_paths: List = []
+            for shortest_path in paths:
+                first_robot_path += moves_to_arrows(shortest_path) + 'A'
+                first_robot_paths.append(first_robot_path)
+            current_pos = target
 
-            if get_pad_value(number_pad, num_pos) is None:
+        print('first_path', first_robot_path)
+
+        # Second robot path (on arrow pad)
+        second_robot_path: str = ""
+        current_pos = 'A'
+        for move in first_robot_path:
+            if move == 'A':
+                second_robot_path += 'A'
                 continue
+            paths = arrow_transitions[current_pos][move]
+            if paths:
+                second_robot_path += paths[0]
+                current_pos = move
 
-            state = (num_pos, arrow_pos, output)
-            if state in seen:
+        print('second_path', second_robot_path)
+
+        # Human path (on arrow pad)
+        human_path: str = ""
+        current_pos = 'A'
+        for move in second_robot_path:
+            if move == 'A':
+                human_path += 'A'
                 continue
-            seen.add(state)
+            paths = arrow_transitions[current_pos][move]
+            if paths:
+                human_path += paths[0]
+                current_pos = move
 
-            for move in ['^', '<', 'v', '>', 'A']:
-                new_num_pos = apply_move(num_pos, move)
-                new_output = output
+        # Calculate complexity using the length of the human input
+        numeric_part: int = int(''.join(filter(str.isdigit, code)))
+        complexity: int = len(human_path) * numeric_part
+        total_complexity += complexity
 
-                if move == 'A':
-                    pad_value = get_pad_value(number_pad, num_pos)
-                    if pad_value:
-                        new_output = output + pad_value
-
-                # Calculate cost of moving on arrow pad to input this move
-                move_cost = get_arrow_moves(arrow_pos, move)
-                # Find new arrow pad position after inputting move
-                new_arrow_pos = arrow_pos
-                if move != 'A':
-                    for r in range(len(arrow_pad)):
-                        for c in range(len(arrow_pad[r])):
-                            if arrow_pad[r][c] == move:
-                                new_arrow_pos = (r, c)
-                                break
-
-                heapq.heappush(queue,
-                               (cost + move_cost,
-                                (0, new_num_pos, new_arrow_pos, new_output)))
+        print('human_path', human_path)
+        print('numeric_part',numeric_part)
+        print('len', len(second_robot_path))
+        print('')
 
     return total_complexity
 
