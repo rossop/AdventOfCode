@@ -8,6 +8,9 @@ from collections import defaultdict, deque
 import os
 import sys
 from typing import Any, Deque, Dict, List, Optional, Tuple
+from functools import cache
+
+from itertools import product
 
 from pathlib import Path
 
@@ -207,6 +210,89 @@ def find_shortest_paths(
     return transitions
 
 
+def compute_sequences(
+    keypad: List[List[Optional[str]]]
+) -> Dict[Tuple[str, str], List[str]]:
+    """Compute all possible sequences between keypad positions.
+
+    Args:
+        keypad: A 2D grid representing the keypad layout.
+
+    Returns:
+        Dict mapping (start, end) positions to possible movement sequences.
+    """
+    positions: Dict[str, Tuple[int, int]] = {}
+    for r, row in enumerate(keypad):
+        for c, val in enumerate(row):
+            if val is not None:
+                positions[val] = (r, c)
+
+    sequences: Dict[Tuple[str, str], List[str]] = {}
+    directions: List[Tuple[int, int, str]] = [
+        (-1, 0, "^"), (1, 0, "v"), (0, -1, "<"), (0, 1, ">")
+    ]
+
+    for start in positions.keys():
+        for end in positions:
+            if start == end:
+                sequences[(start, end)] = ["A"]
+                continue
+
+            possibilities: List[str] = []
+            queue: Deque[Tuple[Tuple[int, int], str]] = deque(
+                [(positions[start], "")]
+            )
+            optimal_len: float = float("inf")
+
+            while queue:
+                (row, col), moves = queue.popleft()
+
+                for nrow, ncol, move in [
+                    (row + dr, col + dc, m) for (dr, dc, m) in directions
+                ]:
+                    if not (
+                        0 <= nrow < len(keypad) and
+                        0 <= ncol < len(keypad[0])
+                    ):
+                        continue
+                    if keypad[nrow][ncol] is None:
+                        continue
+
+                    if keypad[nrow][ncol] == end:
+                        if optimal_len < len(moves) + 1:
+                            break
+                        optimal_len = len(moves) + 1
+                        possibilities.append(moves + move + "A")
+                    else:
+                        queue.append(((nrow, ncol), moves + move))
+                else:
+                    continue
+                break
+
+            sequences[(start, end)] = possibilities
+
+    return sequences
+
+
+def solve_sequence(
+    string: str,
+    sequences: Dict[Tuple[str, str], List[str]]
+) -> List[str]:
+    """Generate all possible movement sequences for a given input string.
+
+    Args:
+        string: Input sequence of buttons to press.
+        sequences: Pre-computed sequences between positions.
+
+    Returns:
+        List of possible movement sequences.
+    """
+    options: List[List[str]] = [
+        sequences[(x, y)] for x, y in zip("A" + string, string)
+    ]
+    return ["".join(x) for x in product(*options)]
+
+
 def solve_part_one(data: Any) -> Any:
     """Solves part one of the challenge.
 
@@ -215,76 +301,58 @@ def solve_part_one(data: Any) -> Any:
     2. Find path for second robot on arrow pad to input first robot's commands
     3. Find path for human on arrow pad to input second robot's commands
     """
-    number_pad: List[List[str]] = [
-        ['7', '8', '9'],
-        ['4', '5', '6'],
-        ['1', '2', '3'],
-        [' ', '0', 'A']
+    number_pad: List[List[Optional[str]]] = [
+        ["7", "8", "9"],
+        ["4", "5", "6"],
+        ["1", "2", "3"],
+        [None, "0", "A"]
+    ]
+    arrow_pad: List[List[Optional[str]]] = [
+        [None, "^", "A"],
+        ["<", "v", ">"]
     ]
 
-    arrow_pad: List[List[str]] = [
-        [' ', '^', 'A'],
-        ['<', 'v', '>'],
-    ]
+    # Compute sequences for both pads
+    num_sequences: Dict[Tuple[str, str], List[str]] = compute_sequences(
+        number_pad
+    )
+    dir_sequences: Dict[Tuple[str, str], List[str]] = compute_sequences(
+        arrow_pad
+    )
+    dir_lengths: Dict[Tuple[str, str], int] = {
+        key: len(value[0]) for key, value in dir_sequences.items()
+    }
 
-    # Get all possible transitions on arrow pad
-    arrow_transitions = find_shortest_paths(arrow_pad)
+    @cache
+    def compute_length(seq: str, depth: int = 25) -> int:
+        """Recursively compute the minimum length of commands needed.
 
-    total_complexity: int = 0
-    for code in data:
-        print('code', code)
-        # First robot path (on number pad)
-        current_pos: str = 'A'
-        first_robot_path: str = ""
-        for target in code:
-            paths = bfs(number_pad, current_pos, target)
-            if not paths:
-                continue
-            first_robot_paths: List = []
-            for shortest_path in paths:
-                first_robot_path += moves_to_arrows(shortest_path) + 'A'
-                first_robot_paths.append(first_robot_path)
-            current_pos = target
+        Args:
+            seq: The sequence to compute length for
+            depth: Current recursion depth
 
-        print('first_path', first_robot_path)
+        Returns:
+            Minimum length of commands needed
+        """
+        if depth == 1:
+            return sum(dir_lengths[(x, y)] for x, y in zip("A" + seq, seq))
 
-        # Second robot path (on arrow pad)
-        second_robot_path: str = ""
-        current_pos = 'A'
-        for move in first_robot_path:
-            if move == 'A':
-                second_robot_path += 'A'
-                continue
-            paths = arrow_transitions[current_pos][move]
-            if paths:
-                second_robot_path += paths[0]
-                current_pos = move
+        length: int = 0
+        for x, y in zip("A" + seq, seq):
+            length += min(
+                compute_length(subseq, depth - 1)
+                for subseq in dir_sequences[(x, y)]
+            )
+        return length
 
-        print('second_path', second_robot_path)
+    total: int = 0
+    for line in data:
+        code: str = "".join(line)
+        inputs: List[str] = solve_sequence(code, num_sequences)
+        length: int = min(map(compute_length, inputs))
+        total += length * int(code[:-1])
 
-        # Human path (on arrow pad)
-        human_path: str = ""
-        current_pos = 'A'
-        for move in second_robot_path:
-            if move == 'A':
-                human_path += 'A'
-                continue
-            paths = arrow_transitions[current_pos][move]
-            if paths:
-                human_path += paths[0]
-                current_pos = move
-
-        # Calculate complexity using the length of the human input
-        numeric_part: int = int(''.join(filter(str.isdigit, code)))
-        complexity: int = len(human_path) * numeric_part
-        total_complexity += complexity
-
-        print('human_path', human_path)
-        print('numeric_part',numeric_part)
-        print('len', len(second_robot_path))
-        print('')
-
-    return total_complexity
+    return total
 
 
 def solve_part_two(data: Any) -> Any:
