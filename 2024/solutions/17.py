@@ -85,10 +85,10 @@ def process(raw_data: str) -> Any:
     match = matches[0]
     key: str = "program"
     val: List[int] = list(
-            map(
+        map(
             int,
             match.split(',')
-            )
+        )
     )
 
     data[key] = val
@@ -194,7 +194,8 @@ def find_lowest_valid_a_brute_force(program):
 
     while True:
         registers = (A, 0, 0)
-        result = simulate_program(registers, program, expected_output=target_output)
+        result = simulate_program(
+            registers, program, expected_output=target_output)
 
         if result is True:  # Exact match found
             return A
@@ -205,14 +206,18 @@ def find_lowest_valid_a_brute_force(program):
 
 def find_lowest_valid_a(program):
     """
-    Find the lowest positive value for register A that causes the program to output itself.
-    Optimized with binary search.
+    Find the lowest positive value for register A that causes the program to
+    output itself. Optimized with binary search.
     """
     target_output = program[:]
 
     def is_valid_a(A):
         registers = (A, 0, 0)
-        return simulate_program(registers, program, expected_output=target_output) is True
+        return simulate_program(
+            registers,
+            program,
+            expected_output=target_output
+        ) is True
 
     # Binary search bounds
     low, high = 1, 2**30  # Arbitrary high bound; adjust if needed
@@ -228,11 +233,71 @@ def find_lowest_valid_a(program):
 
 
 def solve_part_two(data: Any) -> Any:
-    """
-    Solves part two of the challenge.
+    """Solves part two of the challenge by finding the smallest value for
+    register A that causes the program to output itself.
     """
     program: List[int] = data['program']
-    return find_lowest_valid_a_brute_force(program)
+
+    def find_recursive(target: List[int], current_value: int) -> Optional[int]:
+        """Recursively builds the solution by working backwards from target
+        output.
+
+        Args:
+            target: Remaining target values to match
+            current_value: Current accumulated value for register A
+
+        Returns:
+            Optional[int]: Valid value for register A if found, None otherwise
+        """
+        if not target:
+            return current_value
+
+        for test_digit in range(8):
+            # Build potential A value by shifting and adding new digit
+            a: int = (current_value << 3) | test_digit
+            b: int = 0
+            c: int = 0
+            output: Optional[int] = None
+
+            # Simulate program execution for this iteration
+            for ip in range(0, len(program) - 2, 2):
+                opcode: int = program[ip]
+                operand: int = program[ip + 1]
+
+                # Helper function for operand resolution
+                def get_combo(op: int) -> int:
+                    if 0 <= op <= 3:
+                        return op
+                    if op == 4:
+                        return a
+                    if op == 5:
+                        return b
+                    if op == 6:
+                        return c
+                    raise ValueError(f"Invalid operand: {op}")
+
+                if opcode == 5:  # OUT instruction
+                    output = get_combo(operand) % 8
+                elif opcode == 1:  # BXL
+                    b ^= operand
+                elif opcode == 2:  # BST
+                    b = get_combo(operand) % 8
+                elif opcode == 4:  # BXC
+                    b ^= c
+                elif opcode == 6:  # BDV
+                    b = a >> get_combo(operand)
+                elif opcode == 7:  # CDV
+                    c = a >> get_combo(operand)
+
+            # If output matches target, recurse with remaining target values
+            if output == target[-1]:
+                result = find_recursive(target[:-1], a)
+                if result is not None:
+                    return result
+
+        return None
+
+    return find_recursive(program, 0)
 
 
 if __name__ == "__main__":
