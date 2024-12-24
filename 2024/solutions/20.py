@@ -8,9 +8,8 @@ The input files are expected to be located in the 'YYYY/in' directory.
 from collections import deque
 import copy
 import os
-from pprint import pprint
 import sys
-from typing import Any, Callable, Deque, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Deque, List, Optional, Set, Tuple
 
 from pathlib import Path
 
@@ -76,51 +75,43 @@ def bfs_with_constraints(
     rows: int = len(grid)
     cols: int = len(grid[0])
 
-    directions: List[Tuple[int, int]] = [
-        (0, 1),   # Right
-        (0, -1),  # Left
-        (1, 0),   # Down
-        (-1, 0)   # Up
-    ]
+    directions: List[Tuple[int, int]] = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
     start, end = find_start_end(grid)
 
-    # Queue format: (row, col, time, path)
-    cheat_count: int = 0
-    queue: Deque = deque([(start[0], start[1], cheat_count, [start])])
+    # Queue format: (row, col, cheat_count, in_cheat_mode, path)
+    queue: Deque = deque([(start[0], start[1], 0, False, [start])])
     visited: Set = set()
     valid_paths: List[List[Tuple[int, int]]] = []
-    inspection_count: int = 0
+
     while queue:
-        x, y, cheat_count, path = queue.popleft()
+        x, y, cheat_count, in_cheat_mode, path = queue.popleft()
 
         if (x, y) == end:
             valid_paths.append(path)
             continue
-        if (x, y, cheat_count, tuple(path)) in visited:
-           continue
-        visited.add((x, y, cheat_count, tuple(path)))
-        if inspection_count < 5:
-            pprint(inspection_count)
-            pprint(visited)
+
+        state = (x, y, cheat_count, in_cheat_mode)
+        if state in visited:
+            continue
+        visited.add(state)
+
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
-            if (
-                0 <= nx < rows and
-                0 <= ny < cols
-            ):
+            if 0 <= nx < rows and 0 <= ny < cols:
+                new_path = path + [(nx, ny)]
+
                 if grid[nx][ny] in '.SE':
-                    new_path = path + [(nx, ny)]
-                    queue.append((nx, ny, cheat_count, new_path))
-                elif (
-                    grid[nx][ny] == '#' and
-                    cheat_count < 1
-                ):
-                    new_path = path + [(nx, ny)]
-                    queue.append((nx, ny, cheat_count + 1, new_path))
-        inspection_count += 1
-        if inspection_count < 5:
-            pprint('')
+                    # Normal move on path
+                    queue.append((nx, ny, cheat_count, False, new_path))
+                elif grid[nx][ny] == '#':
+                    # Start or continue cheating if allowed
+                    if not in_cheat_mode and cheat_count == 0:
+                        # Start new cheat sequence
+                        queue.append((nx, ny, 1, True, new_path))
+                    elif in_cheat_mode and cheat_count < 20:
+                        # Continue existing cheat sequence
+                        queue.append((nx, ny, cheat_count + 1, True, new_path))
 
     return valid_paths
 
@@ -210,7 +201,7 @@ def evaluate_shortcut(
 def find_shortcuts(
     grid: List[List[str]],
     paths: List[List[Tuple[int, int]]]
-) ->  List[Tuple[Tuple[int, int], Tuple[int, int], int]]:
+) -> List[Tuple[Tuple[int, int], Tuple[int, int], int]]:
     """
     Find and evaluate all potential shortcuts in the grid, optimized using
     precomputed paths.
@@ -298,7 +289,69 @@ def solve_part_one(data: Any) -> Any:
 def solve_part_two(data: Any) -> Any:
     """Solves part two of the challenge.
     """
-    return None
+    if data is None:
+        return None
+
+    grid = copy.deepcopy(data)
+    rows: int = len(grid)
+    cols: int = len(grid[0])
+
+    # Find start position
+    start_r: int = 0
+    start_c: int = 0
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == 'S':
+                start_r = r
+                start_c = c
+                break
+        else:
+            continue
+        break
+
+    # Calculate distances from start using BFS
+    dists: List[List[int]] = [[-1] * cols for _ in range(rows)]
+    dists[start_r][start_c] = 0
+
+    r, c = start_r, start_c
+    while grid[r][c] != 'E':
+        for nr, nc in [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]:
+            if nr < 0 or nc < 0 or nr >= rows or nc >= cols:
+                continue
+            if grid[nr][nc] == '#':
+                continue
+            if dists[nr][nc] != -1:
+                continue
+            dists[nr][nc] = dists[r][c] + 1
+            r, c = nr, nc
+
+    # Count shortcuts that save >= 100 steps
+    count: int = 0
+
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == '#':
+                continue
+            # Check all possible cheat lengths (2 to 20)
+            for radius in range(2, 21):
+                for dr in range(radius + 1):
+                    dc: int = radius - dr
+                    # Check all four diagonal directions
+                    for nr, nc in {
+                        (r + dr, c + dc),
+                        (r + dr, c - dc),
+                        (r - dr, c + dc),
+                        (r - dr, c - dc)
+                    }:
+                        if nr < 0 or nc < 0 or nr >= rows or nc >= cols:
+                            continue
+                        if grid[nr][nc] == '#':
+                            continue
+                        # Check if shortcut saves at least 100 + radius steps
+                        if dists[r][c] - dists[nr][nc] >= 100 + radius:
+                            count += 1
+
+    return count
 
 
 if __name__ == "__main__":
@@ -316,4 +369,3 @@ if __name__ == "__main__":
     result_part_two = solve_part_two(input_data)
     if result_part_two is not None:
         print(f"Part Two: {result_part_two}")
-
