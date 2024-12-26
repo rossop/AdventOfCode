@@ -93,6 +93,4 @@ if __name__ == "__main__":
     result_part_one = solve_part_one(input_data)
     if result_part_one is not None:
         print(f"Part One: {result_part_one}")
-    result_part_two = solve_part_two(input_data)
-    if result_part_two is not None:
-        print(f"Part Two: {result_part_two}")
+
