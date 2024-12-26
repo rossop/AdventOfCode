@@ -5,18 +5,23 @@ This file provides a structure for solving Advent of Code challenges.
 The input files are expected to be located in the 'YYYY/in' directory.
 """
 
+import utils
 from collections import deque
 import os
 from pprint import pprint
 import sys
-from types import new_class
-from typing import Any, Deque, Dict, List, Tuple, Optional
+from typing import Any, Deque, Dict, List, Tuple, Optional, TypeAlias, Union
+from typing import NewType
 
 from pathlib import Path
 
 # Add the parent directory of 'utils' to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-import utils
+
+Value = NewType('Value', int)
+MapEntry: TypeAlias = Tuple[int, int, int]
+SeedMap: TypeAlias = List[MapEntry]
+ProcessedData: TypeAlias = Dict[str, Union[List[int], List[MapEntry]]]
 
 
 input_directory: str = os.path.join(
@@ -59,26 +64,26 @@ def process(raw_data: str) -> Any:
 
 
 def map_single_value(
-    value: int,
-    current_map: Tuple[int, int, int]
-) -> Optional[int]:
+    value: Value,
+    current_map: MapEntry
+) -> Optional[Value]:
     """Map a single value using the current map without generating all ranges.
     """
     dest_start, source_start, range_len = current_map
     if source_start <= value < source_start + range_len:
-        offset: int = value - source_start
+        offset: Value = value - source_start
         return dest_start + offset
     return None
 
 
 def map_values(
-    value: int,
-    current_maps: List[Tuple[int, int, int]]
-) -> List[int]:
+    value: Value,
+    current_maps: SeedMap
+) -> List[Value]:
     """Evaluate all mappings for a value and return a list of valid mapped
     values.
     """
-    mapped_value: Optional[int] = None
+    mapped_value: Optional[Value] = None
 
     # Try all mappings until we find one that works
     for mapping in current_maps:
@@ -92,15 +97,15 @@ def map_values(
 
 
 def iterative_map(
-    seeds: List[int],
+    seeds: List[Value],
     maps: Dict,
     steps: List[str]
-) -> List[int]:
+) -> List[Value]:
     """
     Iteratively maps values though alls tages of maps a queue
     """
     q: Deque = deque([(seed, 0) for seed in seeds])
-    results: List[int] = []
+    results: List[Value] = []
 
     while q:
         value, step_index = q.popleft()
@@ -137,20 +142,62 @@ def solve_part_one(data: Any) -> Any:
         "humidity-to-location",
     ]
 
-    results: List[int] = iterative_map(seeds, data, steps)
+    results: List[Value] = iterative_map(seeds, data, steps)
 
-    answer_part_one: Optional[int] = min(results) if results else None
+    return min(results) if results else None
 
 
-    new_seeds: List[int] = []
-    for i in range(0, len(seeds), 2):
-        seed_pair = (seeds[i], seeds[i+1])
-        new_seeds += [seed_pair[0]+ds for ds in range(seed_pair[1])]
+def solve_part_two(data: Any) -> Any:
+    """Solves part two of the challenge.
+    """
+    if data is None:
+        return None
 
-    results: List[int] = iterative_map(list(set(new_seeds)), data, steps)
-    answer_part_two: Optional[int] = min(results) if results else None
+    # Initialize seed ranges
+    seeds: List[Tuple[int, int]] = []
+    raw_seeds: List[int] = data['seeds']
+    for i in range(0, len(raw_seeds), 2):
+        seeds.append((raw_seeds[i], raw_seeds[i] + raw_seeds[i + 1]))
 
-    return answer_part_one, answer_part_two
+    # Define processing steps
+    steps: List[str] = [
+        "seed-to-soil",
+        "soil-to-fertilizer",
+        "fertilizer-to-water",
+        "water-to-light",
+        "light-to-temperature",
+        "temperature-to-humidity",
+        "humidity-to-location",
+    ]
+
+    # Process each mapping block
+    for step in steps:
+        new_ranges: List[Tuple[int, int]] = []
+        current_maps: List[Tuple[int, ...]] = data[step]
+
+        while seeds:
+            start, end = seeds.pop()
+            for dest_start, source_start, length in current_maps:
+                overlap_start: int = max(start, source_start)
+                overlap_end: int = min(end, source_start + length)
+
+                if overlap_start < overlap_end:
+                    new_ranges.append((
+                        overlap_start - source_start + dest_start,
+                        overlap_end - source_start + dest_start
+                    ))
+
+                    if overlap_start > start:
+                        seeds.append((start, overlap_start))
+                    if end > overlap_end:
+                        seeds.append((overlap_end, end))
+                    break
+            else:
+                new_ranges.append((start, end))
+
+        seeds = new_ranges
+
+    return min(start for start, _ in seeds) if seeds else None
 
 
 if __name__ == "__main__":
@@ -161,8 +208,9 @@ if __name__ == "__main__":
     unprocessed_data = utils.read_input(file_path)
     input_data = process(unprocessed_data['data'])
 
-    result_part_one, result_part_two  = solve_part_one(input_data)
+    result_part_one = solve_part_one(input_data)
     if result_part_one is not None:
         print(f"Part One: {result_part_one}")
+    result_part_two = solve_part_two(input_data)
     if result_part_two is not None:
         print(f"Part Two: {result_part_two}")
