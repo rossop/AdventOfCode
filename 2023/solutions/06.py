@@ -46,14 +46,13 @@ def simulate_race(
     distance: int):
     """
     """
-    races_results: List[bool] = []
-    for val in range(time):
-        speed: int = val
-        session_time: int = time - val
-        races_results.append(distance < speed * session_time)
+    count: int = 0
+    for speed in range(time):
+        session_time: int = time - speed
+        if distance < speed * session_time:
+            count += 1
 
-    return sum(races_results)
-
+    return count
 
 
 def solve_part_one(data: Any) -> Any:
@@ -64,12 +63,14 @@ def solve_part_one(data: Any) -> Any:
     times: List[int] = data['Time']
     distances: List[int] = data['Distance']
 
-    return math.prod(list(map(simulate_race,times, distances)))
+    return math.prod(map(simulate_race,times, distances))
 
 
 def solve_part_two(data: Any) -> Any:
     """Solves part two of the challenge.
     """
+    if data is None:
+        return None
     time: int = int("".join(map(str, data['Time'])))
     distance: int = int("".join(map(str, data['Distance'])))
 
