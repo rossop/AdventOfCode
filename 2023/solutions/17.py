@@ -5,10 +5,10 @@ This file provides a structure for solving Advent of Code challenges.
 The input files are expected to be located in the 'YYYY/in' directory.
 """
 
-from collections import deque
 import os
 import sys
-from typing import Any, Deque, Dict, List, Set, Tuple
+from typing import Any, List, Set, Tuple
+from heapq import heappush, heappop
 
 from pathlib import Path
 
@@ -36,35 +36,31 @@ def process(raw_data: str) -> Any:
     ]
 
 
-def solve_part_one(data: Any) -> Any:
-    """Solves part one of the challenge.
+def find_path(data: Any, max_straight: int, min_straight: int) -> Tuple:
     """
-    if data is None:
-        return None
-
+    """
     rows: int = len(data)
     cols: int = len(data[0])
     end: Tuple[int, int] = (rows-1, cols-1)
 
     # Queue entries: (heat_loss, row, col, dir_index, steps, path)
-    q: List = [(0, 0, 0, -1, 0, [(0, 0)])]
-
-    # Track (row, col, dir_index, steps)
+    q: List = [(0, 0, 0, -1, 0, [(0, 0)])]  # Now treated as a heap
     seen: Set[Tuple[int, int, int, int]] = set()
-
-    directions: List[Tuple[int, int]] = [
-        (0, 1), (1, 0), (0, -1), (-1, 0)]  # R,D,L,U
+    
+    directions: List[Tuple[int, int]] = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # R,D,L,U
     min_heat: int = float('inf')
     best_path: List = []
 
     while q:
-        q.sort(key=lambda x: x[0])
-        heat, r, c, prev_dir, straight, path = q.pop(0)
+        # Replace manual sort + pop with heappop
+        heat, r, c, prev_dir, straight, path = heappop(q)
 
+        # Only consider paths that have moved minimum straight blocks when reaching end
         if (r, c) == end:
-            if heat < min_heat:
-                min_heat = heat
-                best_path = path
+            if prev_dir == -1 or straight >= min_straight:
+                if heat < min_heat:
+                    min_heat = heat
+                    best_path = path
             continue
 
         state: Tuple[int, int, int, int] = (r, c, prev_dir, straight)
@@ -77,8 +73,12 @@ def solve_part_one(data: Any) -> Any:
             if prev_dir != -1 and abs(prev_dir - i) == 2:
                 continue
 
-            # Can't go more than 3 straight
-            if i == prev_dir and straight == 3:
+            # Must continue straight if haven't met minimum
+            if prev_dir != -1 and straight < min_straight and i != prev_dir:
+                continue
+
+            # Can't go more than max_straight blocks straight
+            if i == prev_dir and straight == max_straight:
                 continue
 
             nr: int = r + dr
@@ -88,7 +88,26 @@ def solve_part_one(data: Any) -> Any:
                 new_heat: int = heat + data[nr][nc]
                 new_straight: int = straight + 1 if i == prev_dir else 1
                 new_path: List = path + [(nr, nc)]
-                q.append((new_heat, nr, nc, i, new_straight, new_path))
+                # Replace append with heappush
+                heappush(q, (new_heat, nr, nc, i, new_straight, new_path))
+    return best_path, cols, end, min_heat, rows
+
+
+def solve_part_one(data: Any) -> Any:
+    """Solves part one of the challenge.
+    """
+    if data is None:
+        return None
+
+    min_straight: int = 0
+    max_straight: int = 3
+
+    best_path, cols, end, min_heat, rows = find_path(
+        data,
+        max_straight,
+        min_straight
+    )
+
 
     # Print the path for debugging
     if best_path:
@@ -117,8 +136,18 @@ def solve_part_one(data: Any) -> Any:
 def solve_part_two(data: Any) -> Any:
     """Solves part two of the challenge.
     """
-    # TODO: Implement the solution for part two
-    return None
+    if data is None:
+        return None
+
+    min_straight: int = 4
+    max_straight: int = 10
+
+    best_path, cols, end, min_heat, rows = find_path(
+        data,
+        max_straight,
+        min_straight
+    )
+    return min_heat
 
 
 if __name__ == "__main__":
