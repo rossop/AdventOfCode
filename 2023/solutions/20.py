@@ -5,19 +5,18 @@ This file provides a structure for solving Advent of Code challenges.
 The input files are expected to be located in the 'YYYY/in' directory.
 """
 
-from collections import defaultdict, deque
 import os
-from pprint import pprint
-from re import A
 import sys
-from typing import Any, Deque, Dict, List, Optional, Set
+from collections import deque
+from typing import Any, Dict, Deque, Tuple, List
 
 from pathlib import Path
-
+import math
+import copy
 # Add the parent directory of 'utils' to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+import utils  # noqa: E402
 
-import utils
 
 input_directory: str = os.path.join(
     os.path.dirname(
@@ -31,80 +30,71 @@ input_directory: str = os.path.join(
 def process(raw_data: str) -> Any:
     """Processes the input data.
     """
-    modules: Dict = {}
+    modules: Dict[str, Dict] = {}
+    broadcast_targets: List[str] = []
+
     for line in raw_data.splitlines():
-        parts = line.split("->")
-        name = parts[0].strip()
-        destinations = (
-            [dest.strip() for dest in parts[1].split(",")]
-            if len(parts) > 1 else []
-        )
-        module_type: Optional[str] = None
-        if name.startswith('%'):  # flip-flop
-            module_type = '%'
-            name = name.lstrip(module_type)
-        elif name.startswith('&'):  # conjunction module
-            module_type = '&'
-            name = name.lstrip(module_type)
-        elif name == "broadcaster":
-            module_type = 'broadcaster'
+        left, right = line.strip().split(" -> ")
+        outputs = right.split(", ")
 
-        modules[name] = {
-            "type": module_type,
-            "destinations": destinations,
-            "state": "low" if module_type in ('%', None) else None,
-            "memory": defaultdict(lambda: "low")
-            if module_type == '&' else None  # Memory for conjunctions
-        }
+        if left == "broadcaster":
+            broadcast_targets = outputs
+        else:
+            type_char = left[0]
+            name = left[1:]
+            modules[name] = {
+                "name": name,
+                "type": type_char,
+                "outputs": outputs,
+                "memory": "off" if type_char == "%" else {}
+            }
 
-    return modules
+    # Initialize conjunction module memories
+    for name, module in modules.items():
+        for output in module["outputs"]:
+            if output in modules and modules[output]["type"] == "&":
+                modules[output]["memory"][name] = "lo"
+
+    return modules, broadcast_targets
 
 
-def traverse_modules(modules):
-    """Simulate current traversing modules"""
-    pulse_queue: Deque = deque([("broadcaster", "low")])
-    pulse_counts = {"low": 0, "high": 0}
+def traverse_modules(data: Tuple[Dict, List[str]]) -> Dict[str, int]:
+    """Simulate one button press and count pulses.
+    """
+    modules, broadcast_targets = data
+    pulse_queue: Deque[Tuple[str, str, str]] = deque(
+        [("broadcaster", dest, "lo") for dest in broadcast_targets]
+    )
+    pulse_counts = {"lo": 1, "hi": 0}  # Start with 1 lo for button press
 
     while pulse_queue:
-        current, pulse_level = pulse_queue.popleft()
-        pulse_counts[pulse_level] += 1
+        origin, target, pulse = pulse_queue.popleft()
+        pulse_counts[pulse] += 1
 
-        if current not in modules:  # Handle unknown modules
+        if target not in modules:
             continue
 
-        module = modules[current]
+        module = modules[target]
 
         if module["type"] == "%":
-            if pulse_level == "low":
-                # Update the state and send new pulse
-                module["state"] = "high" if module["state"] == "low" else "low"
-                new_pulse = "high" if module["state"] == "high" else "low"
-                pulse_queue.extend(
-                    (dest, new_pulse) for dest in module["destinations"]
-                )
+            if pulse == "lo":
+                module["memory"] = "on" if module["memory"] == "off" else "off"
+                new_pulse = "hi" if module["memory"] == "on" else "lo"
+                for dest in module["outputs"]:
+                    pulse_queue.append((target, dest, new_pulse))
 
         elif module["type"] == "&":
-            module["memory"][current] = pulse_level
-            if all(value == "high" for value in module["memory"].values()):
-                new_level: str = "low"
-            else:
-                new_level: str = "high"
-
-            pulse_queue.extend(
-                (dest, new_level) for dest in module["destinations"]
-            )
-
-        elif module["type"] == "broadcaster":
-            pulse_queue.extend(
-                (dest, pulse_level) for dest in module["destinations"]
-            )
+            module["memory"][origin] = pulse
+            new_pulse = "lo" if all(
+                x == "hi" for x in module["memory"].values()) else "hi"
+            for dest in module["outputs"]:
+                pulse_queue.append((target, dest, new_pulse))
 
     return pulse_counts
 
 
 def solve_part_one(data: Any) -> Any:
-    """Solves part one of the challenge.
-    """
+    """Solves part one of the challenge."""
     if data is None:
         return None
 
@@ -112,8 +102,8 @@ def solve_part_one(data: Any) -> Any:
 
     for _ in range(1000):  # Simulate pushing the button 1000 times
         currents: Dict[str, int] = traverse_modules(data)
-        total_pulse_counts['low'] += currents['low']
-        total_pulse_counts['high'] += currents['high']
+        total_pulse_counts['low'] += currents['lo']
+        total_pulse_counts['high'] += currents['hi']
 
     return total_pulse_counts['high'] * total_pulse_counts['low']
 
@@ -121,8 +111,65 @@ def solve_part_one(data: Any) -> Any:
 def solve_part_two(data: Any) -> Any:
     """Solves part two of the challenge.
     """
-    # TODO: Implement the solution for part two
-    return None
+    if data is None:
+        return None
+
+    modules, broadcast_targets = data
+
+    # Find the module that feeds into rx
+    (feed,) = [name for name, module in modules.items()
+               if "rx" in module["outputs"]]
+
+    cycle_lengths: Dict[str, int] = {}
+    seen: Dict[str, int] = {name: 0 for name, module in modules.items()
+                            if feed in module["outputs"]}
+
+    press_count: int = 0
+
+    while True:
+        press_count += 1
+        pulse_queue = deque([("broadcaster", x, "lo")
+                             for x in broadcast_targets])
+
+        while pulse_queue:
+            origin, target, pulse = pulse_queue.popleft()
+
+            if target not in modules:
+                continue
+
+            module = modules[target]
+
+            if target == feed and pulse == "hi":
+                seen[origin] += 1
+
+                if origin not in cycle_lengths:
+                    cycle_lengths[origin] = press_count
+                else:
+                    if press_count != seen[origin] * cycle_lengths[origin]:
+                        raise AssertionError(
+                            f"Cycle verification failed for {origin}"
+                        )
+
+                if all(seen.values()):
+                    result: int = 1
+                    for cycle_length in cycle_lengths.values():
+                        result = (
+                            result * cycle_length
+                        ) // math.gcd(result, cycle_length)
+                    return result
+
+            if module["type"] == "%":
+                if pulse == "lo":
+                    module["memory"] = "on" if module["memory"] == "off" else "off"
+                    new_pulse = "hi" if module["memory"] == "on" else "lo"
+                    for dest in module["outputs"]:
+                        pulse_queue.append((target, dest, new_pulse))
+            else:
+                module["memory"][origin] = pulse
+                new_pulse = "lo" if all(
+                    x == "hi" for x in module["memory"].values()) else "hi"
+                for dest in module["outputs"]:
+                    pulse_queue.append((target, dest, new_pulse))
 
 
 if __name__ == "__main__":
@@ -133,9 +180,10 @@ if __name__ == "__main__":
     unprocessed_data = utils.read_input(file_path)
     input_data = process(unprocessed_data['data'])
 
-    result_part_one = solve_part_one(input_data)
+
+    result_part_one = solve_part_one(copy.deepcopy(input_data))
     if result_part_one is not None:
         print(f"Part One: {result_part_one}")
-    result_part_two = solve_part_two(input_data)
+    result_part_two = solve_part_two(copy.deepcopy(input_data))
     if result_part_two is not None:
         print(f"Part Two: {result_part_two}")
