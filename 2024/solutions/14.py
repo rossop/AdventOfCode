@@ -8,12 +8,15 @@ The input files are expected to be located in the '2024/in' directory.
 import os
 import re
 import sys
-from typing import Any, Dict, Tuple, List
+from typing import Any, Dict, Tuple, List, Optional
 from dataclasses import dataclass
+import argparse
+import copy
 
 import numpy as np
 from scipy.fft import fft2, fftshift
 import matplotlib.pyplot as plt
+import zlib
 
 
 @dataclass
@@ -164,7 +167,7 @@ def solve_part_one(data: Any) -> Any:
     Returns:
         Any: The result of the solution for part one.
     """
-    list_of_robots: List[Robot] = data["list_of_robots"]
+    list_of_robots: List[Robot] = copy.deepcopy(data["list_of_robots"])
     rows: int = data["rows"]
     cols: int = data["cols"]
     steps: int = 100
@@ -207,17 +210,22 @@ def visualize_fft(
     pic: List[List[str]],
     rows: int,
     cols: int,
-    iteration: int
+    iteration: int,
+    save_images: bool = False
 ) -> None:
-    """
-    Creates and saves a visualization of the FFT transform.
+    """Creates and saves a visualization of the FFT transform.
 
     Args:
         pic (List[List[str]]): The current grid state
         rows (int): Number of rows in the grid
         cols (int): Number of columns in the grid
         iteration (int): Current iteration number
+        save_images (bool, optional): Whether to save FFT visualizations.
+            Defaults to False.
     """
+    if not save_images:
+        return
+
     # Convert grid to numerical values
     grid: np.ndarray = np.zeros((rows, cols))
     for r in range(rows):
@@ -247,28 +255,104 @@ def visualize_fft(
     plt.close()
 
 
-def solve_part_two(data: Any) -> Any:
+def measure_complexity(pic: List[List[str]], rows: int, cols: int) -> int:
+    """Measures the complexity of the grid using zlib compression.
+
+    Args:
+        pic (List[List[str]]): The current grid state
+        rows (int): Number of rows in the grid
+        cols (int): Number of columns in the grid
+
+    Returns:
+        int: Length of the compressed data as a complexity measure
+    """
+    # Convert grid to string representation
+    field: str = '\n'.join(''.join(row) for row in pic)
+    return len(zlib.compress(field.encode()))
+
+
+def find_outliers(
+    complexities: List[int],
+    iterations: List[int]
+) -> List[Tuple[int, int]]:
+    """Find significant outliers in complexity measurements using statistical
+    methods.
+
+    Args:
+        complexities (List[int]): List of complexity measurements
+        iterations (List[int]): List of corresponding iteration numbers
+
+    Returns:
+        List[Tuple[int, int]]: List of (iteration, complexity) pairs for
+        outliers
+    """
+    if len(complexities) < 2:
+        return []
+
+    # Convert to numpy array for easier calculations
+    data: np.ndarray = np.array(complexities)
+
+    # Use a larger window to focus on longer-term patterns
+    window: int = min(1000, len(data) // 4)  # Increased window size
+    if window < 2:
+        return []
+
+    # Calculate rolling mean using convolution
+    kernel: np.ndarray = np.ones(window) / window
+    rolling_mean: np.ndarray = np.convolve(data, kernel, mode='same')
+
+    # Calculate rolling standard deviation
+    rolling_std: float = np.std(data)
+    if rolling_std == 0:
+        return []
+
+    # Focus on negative deviations (drops in complexity)
+    deviations: np.ndarray = (rolling_mean - data) / rolling_std
+
+    # Find significant drops (more than 5 standard deviations below mean)
+    threshold: float = 5  # Increased threshold for more significant drops
+    outlier_indices: np.ndarray = np.where(deviations > threshold)[0]
+
+    # If we found multiple outliers, return the one with largest deviation
+    if len(outlier_indices) > 0:
+        max_deviation_idx = outlier_indices[np.argmax(
+            deviations[outlier_indices])]
+        return [(iterations[max_deviation_idx], complexities[max_deviation_idx])]
+
+    return []
+
+
+def solve_part_two(data: Any, save_images: bool = False) -> Any:
     """Solves part two of the challenge.
 
     Args:
         data (Any): The input data for the challenge.
+        save_images (bool, optional): Whether to save FFT visualizations.
+            Defaults to False.
 
     Returns:
         Any: The result of the solution for part two.
     """
-    list_of_robots: List[Robot] = data["list_of_robots"]
+    list_of_robots: List[Robot] = copy.deepcopy(data["list_of_robots"])
     rows: int = data["rows"]
     cols: int = data["cols"]
     i: int = 0
+    easter_egg_iter_num: Optional[int] = None
+    # First horizontal pattern by visual inspection
+    first_horizontal_pattern: Optional[int] = 16
+    # First vertical pattern by visual inspection
+    first_vertical_pattern: Optional[int] = 71
+
+    # Track complexity over time
+    complexities: List[int] = []
+    iterations: List[int] = []
 
     while True:
         i += 1
-        # Create a new grid each iteration to avoid overwriting
         new_pic: List[List[str]] = [
-            ["." for _ in range(cols)] for _ in range(rows)
-        ]
+            ["." for _ in range(cols)] for _ in range(rows)]
 
-        # Update all robot positions first
+        # Update all robot positions
         new_positions: List[Tuple[int, int]] = []
         for robot in list_of_robots:
             robot.move(cols, rows)
@@ -276,17 +360,56 @@ def solve_part_two(data: Any) -> Any:
             if 0 <= r < rows and 0 <= c < cols:
                 new_positions.append((r, c))
 
-        # Then update the grid with all new positions
+        # Update grid
         for r, c in new_positions:
             new_pic[r][c] = "#"
 
-        if (i - 19) % 103 == 0 or (i-72) % 101 == 0:
-            visualize_fft(new_pic, rows, cols, i)
+        # Measure complexity
+        complexity: int = measure_complexity(new_pic, rows, cols)
+        complexities.append(complexity)
+        iterations.append(i)
 
-            if i >= 20000:
-                break
+        if (
+            (i - first_horizontal_pattern) % rows == 0 or
+            (i - first_vertical_pattern) % cols == 0
+        ):
+            visualize_fft(new_pic, rows, cols, i, save_images)
 
-    return 7950
+        # Check for pattern changes less frequently
+        if i % 10000 == 0:  # Increased check interval
+            outliers = find_outliers(complexities, iterations)
+            if outliers:
+                for iter_num, compl in outliers:
+                    # Stricter threshold
+                    if compl < np.mean(complexities) \
+                            - 4 * np.std(complexities):
+                        easter_egg_iter_num = iter_num
+
+        if i >= 10000:
+            break
+
+    if save_images:
+        plt.figure(figsize=(15, 5))
+        plt.plot(iterations, complexities, 'b-', label='Complexity')
+
+        # Highlight outliers
+        outliers = find_outliers(complexities, iterations)
+        if outliers:
+            outlier_x = [x for x, _ in outliers]
+            outlier_y = [y for _, y in outliers]
+            plt.scatter(outlier_x, outlier_y, color='red', label='Outliers')
+
+        plt.title('Pattern Complexity Over Time')
+        plt.xlabel('Iteration')
+        plt.ylabel('Compressed Size (bytes)')
+        plt.grid(True)
+        plt.legend()
+        plt.savefig('complexity_analysis.png')
+        plt.close()
+
+    if easter_egg_iter_num is not None:
+        return easter_egg_iter_num
+    return None
 
 
 def save_output_to_file(
@@ -300,23 +423,38 @@ def save_output_to_file(
 
 
 if __name__ == "__main__":
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+        description='Solve Advent of Code Day 14'
+    )
+    parser.add_argument(
+        'input_file',
+        nargs='?',
+        default='14.in',
+        help='Input file name'
+    )
+    parser.add_argument(
+        '--save-images',
+        action='store_true',
+        help='Save FFT visualization images'
+    )
+    args: argparse.Namespace = parser.parse_args()
+
     day: str = __file__.rsplit('/', maxsplit=1)[-1].replace('.py', '')
-    infile = sys.argv[1] if len(sys.argv) >= 2 else f'{day}.in'
     input_data: Dict[str, Any] = {
         "rows": 103,
         "cols": 101,
         "list_of_robots": []
     }
-    if infile.endswith("test"):
+    if args.input_file.endswith("test"):
         input_data["rows"] = 7
         input_data["cols"] = 11
 
-    unprocessed_data = read_input(infile)
+    unprocessed_data = read_input(args.input_file)
     input_data["list_of_robots"] = process(unprocessed_data['data'])
 
     result_part_one = solve_part_one(input_data)
     if result_part_one is not None:
         print(f"Part One: {result_part_one}")
-    result_part_two = solve_part_two(input_data)
+    result_part_two = solve_part_two(input_data, args.save_images)
     if result_part_two is not None:
         print(f"Part Two: {result_part_two}")
