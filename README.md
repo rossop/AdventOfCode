@@ -8,7 +8,9 @@
 | 2023 | ![2023 Days](https://img.shields.io/badge/days%20completed-25-red) | ![2023 Stars](https://img.shields.io/badge/stars%20⭐-50-yellow) |
 | 2024 | ![2024 Days](https://img.shields.io/badge/days%20completed-25-red) | ![2024 Stars](https://img.shields.io/badge/stars%20⭐-50-yellow) |
 
-This repository contains my solutions for the Advent of Code (AoC) challenges, specifically for the year 2024. The structure is designed to organize inputs, solutions, and tests efficiently, facilitating quick access and understanding of each day's challenge.
+This repository contains my solutions for the Advent of Code (AoC) challenges, for the years 2019 to 2024. The structure is designed to organize inputs, solutions, and tests efficiently, facilitating quick access and understanding of each day's challenge.
+
+Note: Inputs are personalized to your user account and are protected by copyright. Please do not share them here. Create an account at adventofcode.com to download your own inputs.
 
 ## Structure
 
@@ -23,13 +25,14 @@ AdventOfCode/
 │   │   ├── 1pt2.test       # Test input for Day 1, Part 2
 │   ...
 │   ├── solutions/
-│       ├── 1.py            # Solution script for Day 1
+│       ├── 01.py            # Solution script for Day 1
 │   ...
 │
-├── env/                    # Requirements for different venvs
+├── get_data.sh             # Script for dowloading demo and main input
 ├── templates/
 ├── utils/
 │   ├── fetch.py            # Fetch data from aoc (using aocd)
+│   ├── get_input.py        # Get input. Load input from in/ directory.
 │
 ├── README.md
 ├── .gitignore
@@ -63,44 +66,3 @@ export AOC_SESSION=your_session_token_here
 
 Windows users should use `set` instead of `export`.
 
-### Using `advent-of-code-data`
-
-Fetch today's puzzle data:
-
-```python
-from aocd import data
-```
-
-Or, fetch data for a specific day and year:
-
-```python
-from aocd import get_data
-day_data = get_data(day=1, year=2024)
-```
-
-To save data directly to a file:
-
-```bash
-aocd > in/day01.in
-```
-
-### Running Solutions
-
-Each day's solution can be executed individually. For example, to run the solution for Day 1:
-
-```bash
-python solutions/day01.py
-```
-
-## Automated Submission
-
-The `advent-of-code-data` package supports automated submission of your solutions:
-
-```python
-from aocd import submit
-submit(my_answer, part='a', day=1, year=2024)
-```
-
-## Feedback
-
-If you have feedback, suggestions or improvements, feel free to open an issue or submit a pull request.
