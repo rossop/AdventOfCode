@@ -3,10 +3,10 @@
 |------|------------|-------------|
 | 2019 | ![2019 Days](https://img.shields.io/badge/days%20completed-7-red) | ![2019 Stars](https://img.shields.io/badge/stars%20⭐-15-yellow) |
 | 2020 | ![2020 Days](https://img.shields.io/badge/days%20completed-10-red) | ![2020 Stars](https://img.shields.io/badge/stars%20⭐-22-yellow) |
-| 2021 | ![2021 Days](https://img.shields.io/badge/days%20completed-10-red) | ![2021 Stars](https://img.shields.io/badge/stars%20⭐-22-yellow) |
-| 2022 | ![2022 Days](https://img.shields.io/badge/days%20completed-10-red) | ![2022 Stars](https://img.shields.io/badge/stars%20⭐-22-yellow) |
-| 2023 | ![2023 Days](https://img.shields.io/badge/days%20completed-10-red) | ![2023 Stars](https://img.shields.io/badge/stars%20⭐-22-yellow) |
-| 2024 | ![2024 Days](https://img.shields.io/badge/days%20completed-10-red) | ![2024 Stars](https://img.shields.io/badge/stars%20⭐-22-yellow) |
+| 2021 | ![2021 Days](https://img.shields.io/badge/days%20completed-18-red) | ![2021 Stars](https://img.shields.io/badge/stars%20⭐-38-yellow) |
+| 2022 | ![2022 Days](https://img.shields.io/badge/days%20completed-14-red) | ![2022 Stars](https://img.shields.io/badge/stars%20⭐-29-yellow) |
+| 2023 | ![2023 Days](https://img.shields.io/badge/days%20completed-25-red) | ![2023 Stars](https://img.shields.io/badge/stars%20⭐-50-yellow) |
+| 2024 | ![2024 Days](https://img.shields.io/badge/days%20completed-25-red) | ![2024 Stars](https://img.shields.io/badge/stars%20⭐-50-yellow) |
 
 This repository contains my solutions for the Advent of Code (AoC) challenges, specifically for the year 2024. The structure is designed to organize inputs, solutions, and tests efficiently, facilitating quick access and understanding of each day's challenge.
 
@@ -28,8 +28,8 @@ AdventOfCode/
 │
 ├── env/                    # Requirements for different venvs
 ├── templates/
-├── utils/                  
-│   ├── fetch.py            # Fetch data from aoc (using aocd) 
+├── utils/
+│   ├── fetch.py            # Fetch data from aoc (using aocd)
 │
 ├── README.md
 ├── .gitignore
