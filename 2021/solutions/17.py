@@ -54,6 +54,21 @@ def can_land_dx(step: int, minx: int, maxx: int) -> bool:
     return False
 
 
+def count_can_land_dx(step: int, minx: int, maxx: int) -> Set[int]:
+    """"""
+    total = set()
+    for dx in range(0, maxx + 1):
+        x = 0
+        odx = dx
+        for _ in range(step):
+            x += dx
+            if dx > 0:
+                dx -= 1
+        if minx <= x <= maxx:
+            total.add(odx)
+    return total
+
+
 def solve_part_one(data: Any) -> Any:
     """Solves part one of the challenge."""
     if data is None:
@@ -70,7 +85,6 @@ def solve_part_one(data: Any) -> Any:
     while True:
         if any(can_land_dx(step, minx, maxx) for step in steps_for_dy(dy, miny, maxy)):
             answer_part_one = sum(range(1, dy + 1))
-            print(answer_part_one)
             break
         dy -= 1
     return answer_part_one
@@ -78,8 +92,20 @@ def solve_part_one(data: Any) -> Any:
 
 def solve_part_two(data: Any) -> Any:
     """Solves part two of the challenge."""
-    # TODO: Implement the solution for part two
-    return None
+    minx: int
+    maxx: int
+    miny: int
+    maxy: int
+    minx, maxx, miny, maxy = data
+
+    total = 0
+
+    for dy in range(miny - 1, -miny + 1):
+        iter = set()
+        for step in steps_for_dy(dy, miny, maxy):
+            iter |= count_can_land_dx(step, minx, maxx)
+        total += len(iter)
+    return total
 
 
 if __name__ == "__main__":
